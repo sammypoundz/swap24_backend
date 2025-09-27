@@ -1,0 +1,2 @@
+username = sagbo1035_db_user, password = HJtWvVUbZX4ern9T
+mongodb+srv://sagbo1035_db_user:HJtWvVUbZX4ern9T@cluster0.di9abps.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
