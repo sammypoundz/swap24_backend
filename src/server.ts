@@ -12,7 +12,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173", // 👉 Vite dev server
+  "https://swap24.vercel.app", 
+];
+
+// ✅ CORS setup
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("❌ Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // ✅ Create HTTP server
@@ -21,7 +40,7 @@ const server = http.createServer(app);
 // ✅ Setup socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*", // 👉 for production, replace with frontend URL
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
