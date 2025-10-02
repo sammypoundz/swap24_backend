@@ -7,6 +7,7 @@ import {
   verifyPhoneOtp, 
   resendPhoneOtp, 
   signin, 
+  verifyLoginOtp,
   logout 
 } from "../controllers/authController";
 
@@ -24,6 +25,9 @@ router.post("/resend-otp-phone", resendPhoneOtp);
 
 // Auth
 router.post("/signin", signin);
+router.post("/login-verify-otp", verifyLoginOtp); // ✅ now works
+
+// Logout
 router.post("/logout", logout);
 
 export default router;

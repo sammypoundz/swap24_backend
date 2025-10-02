@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import User from "../models/User";
+import UserProfile from "../models/user_profile"; // ✅ import UserProfile
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -43,6 +44,7 @@ export const register = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = generateOtp();
 
+    // ✅ create user
     const user = new User({
       firstName,
       lastName,
@@ -53,9 +55,30 @@ export const register = async (req: Request, res: Response) => {
     });
 
     await user.save();
+
+    // ✅ create linked user profile
+    const userProfile = new UserProfile({
+      userId: user._id,
+      username: `${firstName}${lastName}`.toLowerCase(),
+      bio: null,
+      profilePicture: null,
+      walletAddress: null,
+      balance: {
+        naira: 0,
+        crypto: {},
+      },
+      transactions: [],
+    });
+
+    await userProfile.save();
+
     await sendOtpEmail(email, otp);
 
-    res.status(201).json({ message: "User registered. OTP sent to email" });
+    res.status(201).json({
+      message: "User registered. OTP sent to email",
+      userId: user._id,
+      profileId: userProfile._id,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -125,7 +148,6 @@ export const sendOtpPhone = async (req: Request, res: Response) => {
     user.phoneOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
     await user.save();
 
-    // ✅ Instead of sending via Termii, log OTP to console
     console.log(`Generated OTP for phone ${phone}: ${otp}`);
 
     res.json({ message: "OTP generated (check console log)" });
@@ -165,7 +187,6 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
   }
 };
 
-
 // ========== RESEND PHONE OTP ==========
 export const resendPhoneOtp = async (req: Request, res: Response) => {
   try {
@@ -182,7 +203,6 @@ export const resendPhoneOtp = async (req: Request, res: Response) => {
     user.phoneOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
     await user.save();
 
-    // ✅ Instead of sending SMS, log OTP in console for now
     console.log(`Resent OTP for phone ${phone}: ${otp}`);
 
     res.json({ message: "New OTP generated (check console log)" });
@@ -193,7 +213,7 @@ export const resendPhoneOtp = async (req: Request, res: Response) => {
 };
 
 
-// ========== SIGNIN ==========
+// ========== SIGNIN (Step 1: Send OTP) ==========
 export const signin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -206,20 +226,73 @@ export const signin = async (req: Request, res: Response) => {
     if (!user.verified) {
       return res.status(400).json({ message: "Please verify your email first" });
     }
-    if (!user.phoneVerified) {
-      return res.status(400).json({ message: "Please verify your phone number first" });
-    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
+    if (!user.phone) {
+      return res.status(400).json({ message: "Phone number not set for this account" });
+    }
+
+    // ✅ Generate OTP for signin
+    const otp = generateOtp();
+    user.phoneOtp = otp;
+    user.phoneOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
+    await user.save();
+
+    console.log(`Signin OTP for ${user.phone}: ${otp}`);
+
+    res.json({
+      message: "OTP sent to phone. Please verify before signing in",
+      step: "VERIFY_OTP",
+      phone: user.phone, // 👈 added so frontend can mask & display
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// ========== VERIFY LOGIN OTP (Step 2: Finalize Login) ==========
+export const verifyLoginOtp = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.phoneOtp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (user.phoneOtpExpires && user.phoneOtpExpires < new Date()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    // ✅ Clear OTP fields
+    user.phoneOtp = null;
+    user.phoneOtpExpires = null;
+    await user.save();
+
+    // ✅ Generate JWT
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" }
     );
 
-    res.json({ message: "Signin successful", token });
+    const userProfile = await UserProfile.findOne({ userId: user._id });
+
+    res.json({
+      message: "Signin successful",
+      token,
+      userId: user._id,
+      profileId: userProfile?._id || null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
