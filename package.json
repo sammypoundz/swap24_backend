@@ -2,12 +2,12 @@
   "name": "swap24bkend",
   "version": "1.0.0",
   "description": "Swap24 Backend",
-  "main": "dist/server.js",
-  "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
-  },
+  "main": "dist/server.ts",
+ "scripts": {
+  "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+  "start": "ts-node src/server.ts",
+  "build": "tsc"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
