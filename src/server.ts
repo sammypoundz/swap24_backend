@@ -5,7 +5,9 @@ import cors from "cors";
 import http from "http"; // 👈 import http
 import { Server } from "socket.io"; // 👈 import socket.io
 import authRoutes from "./routes/authRoutes";
-import transactionRoutes from "./routes/transactionRoutes"; // ✅ import
+import transactionRoutes from "./routes/transactionRoutes";
+import smartContractRoutes from "./routes/smartcontractRoutes";
+
 
 dotenv.config();
 
@@ -50,6 +52,7 @@ app.set("io", io);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/smartcontract", smartContractRoutes);
 
 // ✅ Handle socket connections
 io.on("connection", (socket) => {

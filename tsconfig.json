@@ -5,11 +5,15 @@
     "outDir": "./dist",
 
     /* Environment */
-    "target": "ES2020",                   
-    "module": "NodeNext",                 
-    "moduleResolution": "NodeNext",       
-    "lib": ["ES2020"],                    
-    "types": ["node"],                    
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "types": ["node"],
+
+    /* JSON + Imports */
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
 
     /* Output */
     "sourceMap": true,
