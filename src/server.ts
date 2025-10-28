@@ -7,6 +7,8 @@ import { Server } from "socket.io"; // 👈 import socket.io
 import authRoutes from "./routes/authRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import smartContractRoutes from "./routes/smartcontractRoutes";
+import offerRoutes from "./routes/offerRoutes";
+
 
 
 dotenv.config();
@@ -16,6 +18,8 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   "http://localhost:5173", // 👉 Vite dev server
+  "http://localhost:5000", // 👉 Vite dev server
+   "http://127.0.0.1:5173", // some browsers use this
   "https://swap24.vercel.app", 
 ];
 
@@ -53,6 +57,7 @@ app.set("io", io);
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/smartcontract", smartContractRoutes);
+app.use("/api/offers", offerRoutes);
 
 // ✅ Handle socket connections
 io.on("connection", (socket) => {

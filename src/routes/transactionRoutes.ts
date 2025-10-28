@@ -1,6 +1,11 @@
 // routes/transactionRoutes.ts
 import { Router } from "express";
-import { getTransactions, addTransaction } from "../controllers/transactionController";
+import {
+  getTransactions,
+  addTransaction,
+  recordAdAfterContract
+} from "../controllers/transactionController";
+
 
 const router = Router();
 
@@ -11,5 +16,7 @@ router.post("/add", addTransaction);
 // ✅ Get all transactions for a user
 // GET /api/transactions/:userId
 router.get("/:userId", getTransactions);
+
+router.post("/recordAdAfterContract", recordAdAfterContract);
 
 export default router;
